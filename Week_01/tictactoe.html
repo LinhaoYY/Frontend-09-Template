@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <style>
+    .cell{
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      background-color: #eee;
+      text-align: center;
+      line-height: 50px;
+
+      vertical-align: middle;
+    }
+  </style>
+  <div id="board"></div>
+</body>
+<script>
+  let pattern = [
+    [1, 0, 0],
+    [0, 2, 0],
+    [0, 0, 0]
+  ]
+  let color = 1;
+  function show() {
+    let board = document.getElementById('board');
+    board.innerHTML = ''
+    for (let i = 0; i < 3; i++) {
+      for(let j = 0; j < 3; j++) {
+        let cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.innerHTML = pattern[i][j] === 1 ? 'Y' : 
+          pattern[i][j] === 2 ? 'N' : '';
+        cell.addEventListener('click', () => move(i, j))
+        board.appendChild(cell)
+      }
+      board.appendChild(document.createElement('br'))
+    }
+  }
+  function move(i, j) {
+    pattern[i][j] = color;
+    if(check(pattern, color)){
+      alert(color === 2 ? 'N胜利了' : 'Y胜利了')
+    }
+    color = 3 - color;
+    show();
+    if(willWin(pattern, color)){
+      alert(color === 2 ? 'N即将胜利' : 'Y即将胜利')
+    }
+  }
+  function check(pattern, color) {
+    for(let i = 0; i < 3; i++) {
+      let win = true;
+      for(let j = 0; j < 3; j++){
+        if(pattern[i][j] !== color){
+          win = false
+        }
+      }
+      if(win)
+        return true
+    }
+
+    for(let i = 0; i < 3; i++) {
+      let win = true;
+      for(let j = 0; j < 3; j++){
+        if(pattern[j][i] !== color){
+          win = false
+        }
+      }
+      if(win)
+        return true
+    }
+
+    {
+      let win = true
+      for(let i = 0; i < 3; i++) {
+        if(pattern[i][i] != color)
+          win = false
+        
+      }
+      if(win)
+      return true
+    }
+    {
+      let win = true
+      for(let i = 0; i < 3; i++) {
+        if(pattern[i][2-i] != color)
+          win = false
+        
+      }
+      if(win)
+        return true
+    }
+  }
+
+  function clone(pattern) {
+    return JSON.parse(JSON.stringify(pattern))
+  }
+  
+  function willWin(pattern, color) {
+    for(let i = 0; i < 3; i++){
+      for(let j = 0; j < 3; j++) {
+        if(pattern[i][j])
+          continue;
+        let temp = clone(pattern);
+        temp[i][j] = color;
+        if(check(temp, color)){
+          return [i, j]
+        }
+      }
+    }
+    return null
+  }
+  function bestChoice(pattern, color) {
+    let p;
+    if(p = willWin(pattern, color)){
+      return {
+        point: p,
+        result: 1
+      }
+    }
+    let point = null;
+    let result = -2;
+    for(let i = 0; i < 3; i++){
+      for(let j = 0; j < 3; j++){
+        if(pattern[i][j])
+          continue;
+        let temp = clone(pattern);
+        temp[i][j] = color;
+        let r = bestChoice(temp, 3 - color).result;
+
+        if(-r > result){
+          result = -r;
+          point = [i, j]
+        }
+      }
+    }
+    return {
+      point: point,
+      result: point ? result : 0
+    }
+  }
+  show()
+  console.log(bestChoice(pattern, color))
+</script>
+</html>
