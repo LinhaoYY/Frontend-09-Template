@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        .cell {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            line-height: 6px;
+            vertical-align: top;
+            background-color: #ccc;
+
+            border-right: 1px solid #fff;
+            border-bottom: 1px solid #fff;
+        }
+        #box {
+            width: 701px;
+            line-height: 6px;
+        }
+    </style>
+    <div id="box"></div>
+    <div>
+        <button onclick="localStorage['map']=JSON.stringify(map)">保 存</button>
+    </div>
+    <script>
+        let boxId = document.getElementById('box');
+        let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0);
+        class sorted {
+            constructor(data, compare) {
+                this.data = data.slice()
+                this.compare = compare || ((a, b) => a - b)
+            }
+            take() {
+                if(this.data.length <= 0)
+                    return;
+                let min = this.data[0];
+                let minIdex = 0;
+                for(let i = 1; i < this.data.length; i++) {
+                    if(this.compare(this.data[i], min) < 0) {
+                        min = this.data[i];
+                        minIdex = i
+                    }
+                }
+                this.data[minIdex] = this.data[this.data.length - 1]
+                this.data.pop();
+                return min
+            }
+            give(v) {
+                this.data.push(v)
+            }
+        }
+        function show() {
+            for(let i = 0; i < 100; i++) {
+                for(let j = 0; j < 100; j++) {
+                    let cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    if(map[i*100+j] === 1)
+                        cell.style.backgroundColor = '#333';
+
+                        cell.addEventListener('mousemove', () => {
+                            if(mousedown) {
+                                if(clear) {
+                                    cell.style.backgroundColor = '';
+                                    map[i*100+j] = 0
+                                } else {
+                                    cell.style.backgroundColor = '#333';
+                                    map[i*100+j] = 1
+                                }
+                            }
+                        })
+                    boxId.appendChild(cell)
+                }
+            }
+
+            let mousedown = false;
+            let clear = false;
+            document.addEventListener('mousedown', e => {
+                mousedown = true;
+                clear = (e.which == 3)
+            })
+
+            document.addEventListener('mouseup', () => mousedown = false)
+            document.addEventListener('contextmenu', e => e.preventDefault())
+        }
+        function sleeping(t) {
+            return new Promise(function(resolve) {
+                setTimeout(resolve, t)
+            })
+        }
+
+        async function findPath(map, start, end) {
+            // let queue = [start];
+            let queue = new sorted([start], (a, b) => distance(a)-distance(b));
+            let table = Object.create(map);
+            async function insert(x, y, pre) {
+                if(x < 0 || x>= 100 || y < 0 || y >= 100)
+                    return;
+                if(table[x*100+y]) 
+                    return;
+                await sleeping(10);
+                boxId.children[x*100+y].style.backgroundColor = 'lightgreen';
+                table[x*100+y] = pre;
+                queue.give([x, y]);
+            }
+            
+            while(queue.data.length) {
+                let [x, y] = queue.take();
+                if(x == end[0] && y == end[1]) {
+                    let path = [];
+                    boxId.children[x*100+y].style.backgroundColor = 'red';
+                    while(x !== start[0] || y !== start[1]) {
+                        path.push(map[x*100, y])
+                        await sleeping(10);
+                        [x,y] = table[x*100+y];
+                        boxId.children[x*100+y].style.backgroundColor = "yellow";
+                        
+                    }
+                    return path;
+                    
+                };
+                await insert(x-1, y, [x, y]);
+                await insert(x+1, y, [x, y]);
+                await insert(x, y-1, [x, y]);
+                await insert(x, y+1, [x, y]);
+
+                await insert(x-1, y-1, [x, y]);
+                await insert(x+1, y+1, [x, y]);
+                await insert(x+1, y-1, [x, y]);
+                await insert(x-1, y+1, [x, y]);
+            }
+
+            function distance(point) {
+                return (end[0] - point[0]) ** 2 + (end[1] - point[1]) ** 2
+            }
+            return false
+        }
+        show();
+        findPath(map, [0,0], [50,50])
+    </script>
+    
+</body>
+</html>
