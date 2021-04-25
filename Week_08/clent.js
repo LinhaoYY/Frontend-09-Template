@@ -16,12 +16,12 @@ class Request {
             this.bodyText = JSON.stringify(this.body);
         else if(this.headers["Content-Type"] === 'application/x-www-form-urlencoded')
             this.bodyText = object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
-        this.headers['Content-Length'] = this.body.length
+        this.headers['Content-Length'] = this.bodyText.length
     }
 
     send(connection) {
         return new Promise((resolve, reject) => {
-            const parser = new ResponseParser;
+            const parser = new ResponseParser();
             if(connection) {
                 connection.write(this.toString())
             } else {
@@ -73,9 +73,18 @@ class ResponseParser {
     get isFinished() {
         return this.bodyParser && this.bodyParser.isFinished;
     }
+    get response() {
+        this.statusLine.match(/HTTP\/1.1 ({0-9}+) ([\S\s]+)/);
+        return {
+            statusCode: RegExp.$1,
+            statusText: RegExp.$2,
+            headers: this.headers,
+            body: this.bodyParser.content.join(''),
+        }
+    }
     receive(string) {
         for(let i = 0;i < string.length; i++) {
-            this.receiveChar(string.charSt(i))
+            this.receiveChar(string.charAt(i))
         }
     }
     receiveChar(char) {

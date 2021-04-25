@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="mountNode"></div>
+<script src="https://gw.alipayobjects.com/os/lib/antv/g6/3.7.1/dist/g6.min.js"></script>
+<script>
+    const data = {
+    // 点集
+    // 'Object','Function','Boolean','Symbol','Error','Number','BigInt','Date','String','RegExp','Array','Map','Set','WeakMap','WeakSet',
+    // 'ArrayBuffer','DataView',
+    // 'Promise','Generator','GeneratorFunction','AsyncFunction',
+    // 'Proxy'
+        nodes: [
+            {
+            id: '0',
+            label:"realm",
+            size:100,
+            labelCfg: {
+                positions: 'center', 
+                } 
+            },{
+            id: '1',
+            label:"Object",
+            size:50
+            },{
+            id: '2',
+            label:"Function",
+            size:50
+            },{
+            id: '3',
+            label:"Boolean",
+            size:50
+            },{
+            id: '4',
+            label:"Symbol",
+            size:50
+            },{
+            id: '5',
+            label:"Error",
+            size:50
+            },{
+            id: '6',
+            label:"Number",
+            size:50
+            },{
+            id: '7',
+            label:"String",
+            size:50
+            },{
+            id: '8',
+            label:"Array",
+            size:50
+            },{
+            id: '9',
+            label:"Map",
+            size:50
+            },{
+            id: '10',
+            label:"Set",
+            size:50
+            }
+        ],
+        edges: [
+            {
+                source: '0', 
+                target: '1'
+            },{
+                source: '0', 
+                target: '2'
+            },{
+                source: '0', 
+                target: '3'
+            },{
+                source: '0', 
+                target: '4'
+            },{
+                source: '0', 
+                target: '5'
+            },{
+                source: '0', 
+                target: '6'
+            },{
+                source: '0', 
+                target: '7'
+            },{
+                source: '0', 
+                target: '8'
+            },{
+                source: '0', 
+                target: '9'
+            },{
+                source: '0', 
+                target: '10'
+            }
+        ]
+    };
+    const graph = new G6.Graph({
+        container: 'mountNode', // String | HTMLElement，必须，在 Step 1 中创建的容器 id 或容器本身
+        width: 2000, // Number，必须，图的宽度
+        height: 2000, // Number，必须，图的高度
+        layout: {
+            type: 'radial',
+            center: [ 300, 300 ],     // 可选，默认为图的中心
+            linkDistance: 300,         // 可选，边长
+            maxIteration: 1000,       // 可选
+            focusNode: 'node11',      // 可选
+            unitRadius: 100,          // 可选
+            preventOverlap: true,     // 可选，必须配合 nodeSize
+            nodeSize: 30,             // 可选
+            strictRadial: false,       // 可选
+            workerEnabled: true       // 可选，开启 web-worker
+        }
+    });
+    graph.data(data); 
+    graph.render();
+</script>
+</body>
+</html>
