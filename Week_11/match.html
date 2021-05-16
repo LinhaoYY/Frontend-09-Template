@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        div #id.class {
+            color: red;
+        }
+    </style>
+    <div>
+        <div id="id" class="class">1212</div>
+    </div>
+    <script>
+        function matchCompandSelector(selector, element) {
+            
+            let regMatches = selector.match(/([a-z]+)|(\.[a-z][\w-]+)|(#[a-z][\w-]+)/g) 
+            let attr;
+            for(let subSelector of regMatches) {
+                attr = ""
+                if(subSelector.charAt(0) == "#") {
+                    attr = element.attributes["id"]
+                    
+                    if(!attr || attr.value !== subSelector.substring(1)) {
+                        return false
+                    }
+                } else if(subSelector.charAt(0) == ".") {
+                    attr = element.attributes["class"]
+                    if(!attr || !attr.value.split(/[\t ]+/).includes(subSelector.substring(1))) {
+                        return false
+                    }
+                } else if(subSelector !== element.localName) {
+                    return false
+                }
+            }
+            return true
+        }
+
+        function match(selector, element) {
+            let compandSelectors = selector.split(/[ \t]+/);
+            compandSelectors = compandSelectors.reverse();
+            if(!matchCompandSelector(compandSelectors[0], element)) {
+                return false
+            };
+            
+            let selectorsMatchedNum = 1;
+            let prevElem = element.parentElement;
+                
+            if(matchCompandSelector(compandSelectors[1],prevElem)) {
+                return true
+            }
+
+            return false
+                
+             
+        }
+
+        console.log(match("div #id.class", document.getElementById("id")))
+    </script>
+</body>
+</html>

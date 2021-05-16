@@ -1,4 +1,6 @@
 const net = require('net');
+const parser = require('./parser.js')
+
 class Request {
     constructor(options) {
         this.method = options.method || "GET";
@@ -14,7 +16,7 @@ class Request {
         if(this.headers["Content-Type"] === 'application/json')
             this.bodyText = JSON.stringify(this.body);
         else if(this.headers["Content-Type"] === 'application/x-www-form-urlencoded')
-            this.bodyText = object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
+            this.bodyText = Object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
         this.headers['Content-Length'] = this.bodyText.length
     }
 
@@ -180,7 +182,7 @@ class TrunkedBodyParser {
     }
 }
 void async function (){
-    let Request = new Request({
+    let request = new Request({
         method: "POST",
         host: "127.0.0.1",
         port: "8088",
@@ -193,5 +195,6 @@ void async function (){
         }
     })
     let response = await request.send();
+    let dom = parser.parseHTML(response.body);
     console.log(response)
 }()

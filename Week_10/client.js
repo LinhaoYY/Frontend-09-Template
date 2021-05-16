@@ -1,4 +1,6 @@
-const net = require('net');
+const net = require("net");
+const parser = require("./parse.js");
+
 class Request {
     constructor(options) {
         this.method = options.method || "GET";
@@ -14,13 +16,17 @@ class Request {
         if(this.headers["Content-Type"] === 'application/json')
             this.bodyText = JSON.stringify(this.body);
         else if(this.headers["Content-Type"] === 'application/x-www-form-urlencoded')
-            this.bodyText = object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
+            this.bodyText = Object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
         this.headers['Content-Length'] = this.bodyText.length
     }
-
+    toString() {
+        return `${this.method} ${this.path} HTTP/1.1\r
+        ${Object.keys(this.headers).map(key =>`${key}: ${this.headers[key]}`).join('\r\n')}\r\r
+        ${this.bodyText}`
+    }
     send(connection) {
         return new Promise((resolve, reject) => {
-            const parser = new ResponseParser();
+            const parser = new ResponseParser;
             if(connection) {
                 connection.write(this.toString())
             } else {
@@ -35,22 +41,21 @@ class Request {
                 parser.receive(data.toString());
                 if(parser.isFinished) {
                     resolve(parser.response);
-                    connection.end();
                 }
+                connection.end();
             })
             connection.on("error", (err) => {
                 reject(err);
                 connection.end()
             })
-            // resolve("")
         })
     }
-    toString() {
-        return `${this.method} ${this.path} HTTP/1.1\r
-        ${Object.keys(this.headers).map(key =>`${key}: ${this.headers[key]}`).join('\r\n')}\r\r
-        ${this.bodyText}`
-    }
 }
+
+class Response {
+
+}
+
 class ResponseParser {
     constructor () {
         this.WAITING_STATUS_LIKE = 0;
@@ -179,8 +184,9 @@ class TrunkedBodyParser {
         }
     }
 }
-void async function (){
-    let Request = new Request({
+
+void async function() {
+    let request = new Request({
         method: "POST",
         host: "127.0.0.1",
         port: "8088",
@@ -191,7 +197,7 @@ void async function (){
         body: {
             name: "linhao"
         }
-    })
+    });
     let response = await request.send();
-    console.log(response)
-}()
+    let dom = parser.parseHtml(response.body)
+}();

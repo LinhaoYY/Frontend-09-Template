@@ -1,20 +1,20 @@
 const css = require('css');
-const layout = require('../Week_10/layout');
+const EOF = Smybol('EOF');
+const layout = require('./layout.js');
 
 let currentToken = null;
 let currentAttribute = null;
 
 let stack = [{
-    type: "document",
+    type: 'document',
     children: []
-}]
-
+}];
 let currentTextNode = null;
 
-let rules = [] ;
+let rules = [];
+
 function addCSSRules(text) {
     var ast = css.parse(text);
-    console.log(JSON.stringify(ast, null, '  '));
     rules.push(...ast.stylesheet.rules)
 }
 
@@ -38,6 +38,32 @@ function match(element, selector) {
     return false
 }
 
+function specificity(selector) {
+    var p = [0, 0, 0, 0];
+    var selectorParts = selector.split(" ");
+    for(var part of selectorParts) {
+        if(part.charAt(0) == '#') {
+            p[1] += 1;
+        } else if(part.charAt(0) == '.') {
+            p[2] += 1;
+        } else {
+            p[3] += 1;
+        }
+    }
+    return p;
+}
+
+function compare(sp1, sp2) {
+    if(sp1[0] - sp2[0])
+        return sp1[0] - sp2[0]
+    if(sp1[1] - sp2[1])
+        return sp1[1] - sp2[1]
+    if(sp1[2] - sp2[2])
+        return sp1[2] - sp2[2]
+
+    return sp1[3] - sp2[3]
+}
+
 function computeCSS(element) {
     var elements = stack.slice().reverse();
     if(!element.computedStyle)
@@ -46,7 +72,7 @@ function computeCSS(element) {
     for(let rule of rules) {
         var selectorParts = rule.selectors[0].split(" ").reverse();
         if(!match(element, selectorParts)) 
-            continue
+            continue;
         let matched = false;
         var j = 1;
         for(var i = 0; i < elements.length; i++) {
@@ -77,32 +103,6 @@ function computeCSS(element) {
     }
 }
 
-function specificity(selector) {
-    var p = [0, 0, 0, 0];
-    var selectorParts = selector.split(" ");
-    for(var part of selectorParts) {
-        if(part.charAt(0) == '#') {
-            p[1] += 1;
-        } else if(part.charAt(0) == '.') {
-            p[2] += 1;
-        } else {
-            p[3] += 1;
-        }
-    }
-    return p;
-}
-
-function compare(sp1, sp2) {
-    if(sp1[0] - sp2[0])
-        return sp1[0] - sp2[0]
-    if(sp1[1] - sp2[1])
-        return sp1[1] - sp2[1]
-    if(sp1[2] - sp2[2])
-        return sp1[2] - sp2[2]
-
-    return sp1[3] - sp2[3]
-}
-
 function emit(token) {
     let top = stack[stack.length - 1];
     if(token.type == 'startTag') {
@@ -129,7 +129,7 @@ function emit(token) {
         if(!token.isSelfClosing)
             stack.push(element);
         
-        currentTextNode = null
+        currentTextNode = null;
 
     } else if(token.type == 'endTag') {
         if(top.tagName != token.tagName) {
@@ -138,9 +138,10 @@ function emit(token) {
             if(top.tagName == 'style') {
                 addCSSRules(top.children[0].content);
             }
-            stack.pop()
+            layout(top);
+            stack.pop();
         }
-        currentTextNode = null
+        currentTextNode = null;
     } else if(token.type = 'text') {
         if(currentTextNode == null) {
             currentTextNode = {
@@ -152,15 +153,6 @@ function emit(token) {
         }
         currentTextNode.content += token.content;
     }
-}
-
-const EOF = Symbol("EOF");
-module.exports.parseHTML = function parseHTML(html) {
-    let state = data;
-    for(let c of html) {
-        state = state(c)
-    }
-    state = state(EOF)
 }
 
 function data(c) {
@@ -179,6 +171,7 @@ function data(c) {
         return data;
     }
 }
+
 function tagOpen(c) {
     if(c == '/') {
         return endTagOpen;
@@ -189,20 +182,11 @@ function tagOpen(c) {
         }
         return tagName(c)
     } else {
+        emit({
+            type: "text",
+            content: c
+        });
         return;
-    }
-}
-function endTagOpen(c) {
-    if(c.match(/^[a-zA-Z]$/)) {
-        currentToken = {
-            type: 'endTag',
-            tagName: ""
-        }
-        return tagName(c);
-    } else if(c == ">") {
-
-    } else {
-
     }
 }
 
@@ -218,6 +202,7 @@ function tagName(c) {
         emit(currentToken)
         return data;
     } else {
+        currentToken.tagName += c
         return tagName;
     }
 }
@@ -225,10 +210,10 @@ function tagName(c) {
 function beforeAttributeName(c) {
     if(c.match(/^[\t\n\f ]$/)) {
         return beforeAttributeName;
-    } else if(c == ">" || c == "/" || c == EDF) {
+    } else if(c == ">" || c == "/" || c == EOF) {
         return afterAttributeName(c);
     } else if(c == "=") {
-        return beforeAttributeName;
+        // return beforeAttributeName;
     } else {
         currentToken = {
             name: '',
@@ -237,8 +222,9 @@ function beforeAttributeName(c) {
         return attributeName(c);
     }
 }
+
 function attributeName(c) {
-    if(c.match(/^[\t\n\f]$/) || c == '/' || c== '>' || c ==  EDF) {
+    if(c.match(/^[\t\n\f ]$/) || c == '/' || c== '>' || c ==  EOF) {
         return afterAttributeName(c)
     } else if(c == '=') {
         return beforeAttributeValue
@@ -253,46 +239,65 @@ function attributeName(c) {
 }
 
 function beforeAttributeValue(c) {
-    if(c.match(/^[\t\n\f ]$/) || c == '/' || c == '>' || c == EDF) {
+    if(c.match(/^[\t\n\f ]$/) || c == '/' || c == '>' || c == EOF) {
         return beforeAttributeValue
     } else if(c == "\"") {
-        return doubleQuoteAttributeValue
+        return doubleQuotedAttributeValue
     } else if(c == "\'") {
-        return singleQuoteAttributeValue
+        return singleQuotedAttributeValue
     } else if(c == ">") {
         
     } else {
-        return UnquoteAttributeValue(c)
+        return UnquotedAttributeValue(c)
     }
 }
- function doubleQuoteAttributeValue(c) {
+
+function doubleQuotedAttributeValue(c) {
     if(c == "\"") {
         currentToken[currentAttribute.name] = currentAttribute.value;
-        return afterQuoteAttributeValue
+        return afterQuotedAttributeValue
     } else if(c == "\u0000") {
 
-    } else if(c == EDF) {
+    } else if(c == EOF) {
 
     } else {
         currentAttribute.value += c;
-        return doubleQuoteAttributeValue
+        return doubleQuotedAttributeValue
     }
- }
- function singleQuoteAttributeValue(c) {
+}
+
+function singleQuotedAttributeValue(c) {
     if(c == "\'") {
         currentToken[currentAttribute.name] = currentAttribute.value;
-        return afterQuoteAttributeValue
+        return afterQuotedAttributeValue
     } else if(c == "\u0000") {
 
-    } else if(c == EDF) {
+    } else if(c == EOF) {
 
     } else {
         currentAttribute.value += c;
-        return doubleQuoteAttributeValue
+        return doubleQuotedAttributeValue
     }
- }
+}
 
-function UnquoteAttributeValue(c) {
+function afterQuotedAttributeValue(c) {
+    if(c.match(/^[\t\n\f ]$/)) {
+        return beforeAttributeName
+    } else if(c == '/') {
+        return selfClosingStartTag
+    } else if(c == ">") {
+        currentToken[currentAttribute.name] = currentAttribute.value;
+        emit(currentToken);
+        return data
+    } else if(c == EOF) {
+
+    } else {
+        currentToken.value += c;
+        return doubleQuotedAttributeValue
+    }
+}
+
+function UnquotedAttributeValue(c) {
     if(c.match(/^[\t\n\f ]$/)) {
         currentToken[currentAttribute.name] = currentAttribute.value;
         return beforeAttributeName;
@@ -311,7 +316,35 @@ function UnquoteAttributeValue(c) {
 
     } else {
         currentAttribute.value += c;
-        return UnquoteAttributeValue
+        return UnquotedAttributeValue
+    }
+}
+
+function selfClosingStartTag(c) {
+    if(c == ">") {
+        currentToken.isSelfClosing = true;
+        emit(currentToken)
+        return data;
+    } else if(c == "EOF") {
+
+    } else {
+
+    }
+}
+
+function endTagOpen(c) {
+    if(c.match(/^[a-zA-Z]$/)) {
+        currentToken = {
+            type: 'endTag',
+            tagName: ""
+        }
+        return tagName(c);
+    } else if(c == ">") {
+
+    } else if(c == EOF) {
+
+    } else {
+
     }
 }
 
@@ -338,14 +371,11 @@ function afterAttributeName(c) {
     }
 }
 
-function selfClosingStartTag(c) {
-    if(c == ">") {
-        currentToken.isSelfClosing = true;
-        return data;
-    } else if(c == "EOF") {
-
-    } else {
-
+module.exports.parserHtml = function parseHTML(html) {
+    let state = data;
+    for(let c of html) {
+        state = state(c)
     }
+    state = state(EOF);
+    return stack([0])
 }
-
