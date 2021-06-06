@@ -1,4 +1,4 @@
-import { HotUpdateChunk } from "webpack";
+
 import {Component, createElement} from "./framework"
 
 class Carousel extends Component{
@@ -10,7 +10,6 @@ class Carousel extends Component{
         this.attributes[name] = value
     }
     render() {
-        // console.log(this.attributes)
         this.root = document.createElement('div');
         this.root.classList.add('carousel')
         for(let record of this.attributes.src) {
@@ -24,8 +23,6 @@ class Carousel extends Component{
             let startX = event.clientX;
             let move = event => {
                 let x = event.clientX - startX;
-
-                // let current = position - Math.round(position / 500);
                 let current = position - ((x - x % 500) / 500);
 
                 for(let offset of [-1, 0, 1]) {
@@ -33,25 +30,21 @@ class Carousel extends Component{
                     pos = (pos + children.length) % children.length;
 
                     children[pos].style.transition = 'none';
-                    children[pos].style.transform = `translateX(${-pos*500 + offset* 500 + x}px)`
+                    children[pos].style.transform = `translateX(${-pos*500 + offset * 500 + x % 500}px)`
                 }
                 
             }
             let up = event => {
                 let x = event.clientX - startX;
-                position = position - Math.round(position / 500);
+                position = position - Math.round(x / 500);
 
-                for(let offset of [0, - Math.sign(Math.round(position / 500) - x + 250*Math.sign(x))]) {
+                for(let offset of [0, - Math.sign(Math.round(position / 500) - x + 250 * Math.sign(x))]) {
                     let pos = position + offset;
                     pos = (pos + children.length) % children.length;
 
                     children[pos].style.transition = '';
-                    children[pos].style.transform = `translateX(${-pos*500 + offset* 500 + x}px)`
+                    children[pos].style.transform = `translateX(${-pos*500 + offset* 500 }px)`
                 }
-                // for(let child of children) {
-                //     child.style.transition = "";
-                //     child.style.transform = `translateX(${- position * 500 + x}px)`;
-                // }
                 document.removeEventListener("mousemove", move);
                 document.removeEventListener("mouseup", up);
             }
