@@ -1,0 +1,21 @@
+<!-- <script src="./gesture.js"></script> -->
+<body oncontextmenu="event.preventDefault()"></body>
+<script type="module">
+    import {enableGesture} from './gesture.js'
+    new enableGesture(document.documentElement);
+    document.documentElement.addEventListener("tap", () => {
+        console.log('tap111')
+    })
+    // document.documentElement.addEventListener("cancel", () => {
+    //     console.log('cancel121212')
+    // })
+    // document.documentElement.addEventListener("isPan", () => {
+    //     console.log('isPan12432343')
+    // })
+    // document.documentElement.addEventListener("isPress", () => {
+    //     console.log('isPress21342343')
+    // })
+    // document.documentElement.addEventListener("isFlick", () => {
+    //     console.log('isFlick12324')
+    // })
+</script>
